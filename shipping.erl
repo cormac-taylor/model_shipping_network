@@ -71,22 +71,21 @@ load_ship(Shipping_State, Ship_ID, Container_IDs) ->
     {ship, Ship_ID, _, Container_Cap} = get_ship(Shipping_State, Ship_ID),
     {Port_ID, _} = get_ship_location(Shipping_State, Ship_ID),
     Port_Container_Result = maps:find(Port_ID, Shipping_State#shipping_state.port_inventory),
-    
     Ship_Container_Result = maps:find(Ship_ID, Shipping_State#shipping_state.ship_inventory),
-
     case Port_Container_Result of
     {ok, Port_Container_IDs} ->
         case Ship_Container_Result of
         {ok, Ship_Container_IDs} ->
-            case lists:all(fun(Container) -> lists:member(Container, Port_Container_IDs) end, Container_IDs) of
+            case lists:all(fun(Container_ID) -> lists:member(Container_ID, Port_Container_IDs) end, Container_IDs) of
             true ->
-                case lists:any(fun(Container) -> lists:member(Container, Ship_Container_IDs) end, Container_IDs) of
+                case lists:any(fun(Container_ID) -> lists:member(Container_ID, Ship_Container_IDs) end, Container_IDs) of
                 false -> 
-                    New_Weight = get_ship_weight(Shipping_State, Ship_ID) + get_container_weight(Shipping_State, Container_IDs),
+                    New_Cap = length(Ship_Container_IDs) + length(Container_IDs),
                     if
-                        New_Weight > Container_Cap -> 
+                        New_Cap > Container_Cap -> 
                             throw(error);
-                        true -> good
+                        true -> Shipping_State#shipping_state{ship_inventory = (Shipping_State#shipping_state.ship_inventory)#{Ship_ID := Ship_Container_IDs ++ Container_IDs},
+                                    port_inventory = (Shipping_State#shipping_state.port_inventory)#{Port_ID := lists:filter(fun(Container_ID) -> not lists:member(Container_ID, Container_IDs) end, Port_Container_IDs)}}
                     end;
                 true -> throw(error)
                 end;
@@ -96,8 +95,6 @@ load_ship(Shipping_State, Ship_ID, Container_IDs) ->
         end;
     _ -> throw(error)
     end.
-
-
 
 unload_ship_all(Shipping_State, Ship_ID) ->
 
