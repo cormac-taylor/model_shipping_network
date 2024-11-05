@@ -149,11 +149,17 @@ unload_ship(Shipping_State, Ship_ID, Container_IDs) ->
     end.
 
 set_sail(Shipping_State, Ship_ID, {Port_ID, Dock}) ->
-    io:format("Implement me!!"),
-    error.
-
-
-
+    New_Port_Taken_Docks = get_occupied_docks(Shipping_State, Port_ID),
+    case lists:member(Dock, New_Port_Taken_Docks) of
+        false -> 
+            case get_ship_location(Shipping_State, Ship_ID) of 
+                {Port_ID, _} -> throw(error);
+                _ ->
+                    Updated_Shipping_State = Shipping_State#shipping_state{ship_locations = lists:map(fun({Current_Port, Current_Dock, Current_Ship}) -> if Current_Ship == Ship_ID -> {Port_ID, Dock, Ship_ID}; true -> {Current_Port, Current_Dock, Current_Ship} end end, Shipping_State#shipping_state.ship_locations)},
+                    {ok, Updated_Shipping_State}
+            end;
+        true -> throw(error)
+    end.
 
 %% Determines whether all of the elements of Sub_List are also elements of Target_List
 %% @returns true is all elements of Sub_List are members of Target_List; false otherwise
