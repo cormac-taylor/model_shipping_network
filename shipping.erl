@@ -62,16 +62,29 @@ get_container_weight(Shipping_State, Container_IDs) ->
     end.
 
 get_ship_weight(Shipping_State, Ship_ID) ->
-    Ship_Inventory_Map = Shipping_State#shipping_state.ship_inventory,
-    Ship_Inventory = maps:find(Ship_ID, Ship_Inventory_Map),
-    case Ship_Inventory of
+    case maps:find(Ship_ID, Shipping_State#shipping_state.ship_inventory) of
         {ok, Container_IDs} -> get_container_weight(Shipping_State, Container_IDs);
         _ -> throw(error)
     end.
 
 load_ship(Shipping_State, Ship_ID, Container_IDs) ->
-    io:format("Implement me!!"),
-    error.
+    case get_ship(Shipping_State, Ship_ID) of
+        {ship, Ship_ID, _, Container_Cap} -> 
+            case get_ship_location(Shipping_State, Ship_ID) of
+                {Port_ID, _} -> 
+                    case maps:find(Port_ID, Shipping_State#shipping_state.port_inventory) of
+                        {ok, Port_Container_IDs} ->
+                            case  of
+                            % make sure Container_IDs is subset of Port_Container_IDs  
+                            % then make sure Container_IDs is disjoint from Ship_Container_IDs
+                            % then check ship capacity
+                            end;
+                        _ -> throw(error)
+                    end;
+                _ -> throw(error)
+            end;
+        _ -> throw(error)
+    end.
 
 unload_ship_all(Shipping_State, Ship_ID) ->
     io:format("Implement me!!"),
