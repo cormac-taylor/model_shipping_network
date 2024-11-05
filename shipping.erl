@@ -68,27 +68,56 @@ get_ship_weight(Shipping_State, Ship_ID) ->
     end.
 
 load_ship(Shipping_State, Ship_ID, Container_IDs) ->
-    case get_ship(Shipping_State, Ship_ID) of
-        {ship, Ship_ID, _, Container_Cap} -> 
-            case get_ship_location(Shipping_State, Ship_ID) of
-                {Port_ID, _} -> 
+    {ship, Ship_ID, _, Container_Cap} = get_ship(Shipping_State, Ship_ID),
+    {Port_ID, _} = get_ship_location(Shipping_State, Ship_ID),
+    Port_Container_Result = maps:find(Port_ID, Shipping_State#shipping_state.port_inventory),
+    
+    Ship_Container_Result = maps:find(Ship_ID, Shipping_State#shipping_state.ship_inventory),
+
+    case Port_Container_Result of
+    {ok, Port_Container_IDs} ->
+        case Ship_Container_Result of
+        {ok, Ship_Container_IDs} ->
+            case lists:all(fun(Container) -> lists:member(Container, Port_Container_IDs) end, Container_IDs) of
+            true ->
+                case lists:any(fun(Container) -> lists:member(Container, Ship_Container_IDs) end, Container_IDs) of
+                false -> 
+                    New_Weight = get_ship_weight(Shipping_State, Ship_ID) + get_container_weight(Shipping_State, Container_IDs),
+                    if
+                        New_Weight > Container_Cap -> 
+                            throw(error);
+                        true -> good
+                    end;
+                true -> throw(error)
+                end;
+            false -> throw(error)
+            end;
+        _ -> throw(error)
+        end;
+    _ -> throw(error)
+    end.
+
+
+
+unload_ship_all(Shipping_State, Ship_ID) ->
+
+    case get_ship_location(Shipping_State, Ship_ID) of
+        {Port_ID, _} -> 
+            case get_port(Shipping_State, Port_ID) of
+                {port, Port_ID, _, _, Container_Cap} ->
                     case maps:find(Port_ID, Shipping_State#shipping_state.port_inventory) of
                         {ok, Port_Container_IDs} ->
-                            case  of
-                            % make sure Container_IDs is subset of Port_Container_IDs  
-                            % then make sure Container_IDs is disjoint from Ship_Container_IDs
-                            % then check ship capacity
-                            end;
+                                case maps:find(Port_ID, Shipping_State#shipping_state.port_inventory) of
+                                    {ok, Port_Container_IDs} ->
+                                        0;
+                                    _ -> throw(error)
+                                end;
                         _ -> throw(error)
                     end;
                 _ -> throw(error)
             end;
         _ -> throw(error)
     end.
-
-unload_ship_all(Shipping_State, Ship_ID) ->
-    io:format("Implement me!!"),
-    error.
 
 unload_ship(Shipping_State, Ship_ID, Container_IDs) ->
     io:format("Implement me!!"),
